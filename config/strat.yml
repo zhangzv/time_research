@@ -1,11 +1,10 @@
+# >>>>>>>>>>>>>>>>>>>>>>>>> compulsary >>>>>>>>>>>>>>>>>>>>>>>>>
 # Must with format yyyy-mm-dd
 # https://yaml.org/type/timestamp.html
-sdate: 2023-12-01
+sdate: 2023-01-01
 edate: 2023-12-31
-
 # check the keys of INTERVAL_MS_MAP in utils/var.py
-timeframe: 1h
-
+timeframe: 30m
 # different exchange has different format for the pair name
 # ccxt mapped exchange specified symbol to their own internal standardised symbol
 # // base asset or currency
@@ -20,7 +19,15 @@ timeframe: 1h
 # 'ETH/USDT:ETH'  // ETH/USDT inverse perpetual swap contract funded in ETH
 # 'ETH/USDT:USDT' // ETH/USDT linear perpetual swap contract funded in USDT
 # https://docs.ccxt.com/#/
-ccxt_sym: BTC/USDT:USDT
+ccxt_sym: BNB/USDT:USDT
+# custom file name and function name
+file: v1.py
+func: func
+# Assuming binance 1bps and okx 1bps
+fee: 0.0002
+# <<<<<<<<<<<<<<<<<<<<<<<<< compulsary <<<<<<<<<<<<<<<<<<<<<<<<<
 
+# >>>>>>>>>>>>>>>>>>>>>>>>> optional >>>>>>>>>>>>>>>>>>>>>>>>>
 # threshold of abs(A/B-1)
 threshold: 0.001
+# <<<<<<<<<<<<<<<<<<<<<<<<< optional <<<<<<<<<<<<<<<<<<<<<<<<<
