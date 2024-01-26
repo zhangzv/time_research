@@ -1,6 +1,7 @@
 import math
 from typing import Any, Literal
 
+import numpy as np
 from cycler import cycler
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
@@ -191,4 +192,32 @@ def plot_table(
         else:
             cell.set_height(row_height)
             cell.set_facecolor(row_colors[row % len(row_colors)])
+    return fig
+
+
+def plot_dist(
+    data: np.ndarray,
+    bins: int,
+    _x_label: str,
+    _y_label: str,
+    _title: str,
+) -> Figure:
+    """dist plot
+
+    Args:
+        data (np.ndarray): data
+        bins (int): bins
+        _x_label (str): x label
+        _y_label (str): y label
+        _title (str): title
+
+    Returns:
+        Figure: plot
+    """
+    update_plot_settings()
+    fig, ax = plt.subplots(figsize=(16, 9))
+    ax.hist(x=data, bins=bins)
+    ax.set_xlabel(xlabel=_x_label)
+    ax.set_ylabel(ylabel=_y_label)
+    ax.set_title(label=_title)
     return fig
