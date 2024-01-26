@@ -23,7 +23,8 @@ DATA_DIR: str = os.path.join(REPO_DIR, "output")
 REPORT_DIR: str = os.path.join(DATA_DIR, "report")
 LOG_DIR: str = os.path.join(DATA_DIR, "logs")
 MISSING_DATA_DIR: str = os.path.join(DATA_DIR, "missing")
+DEBUG_DIR: str = os.path.join(DATA_DIR, "debug")
 
-for fdir in (DATA_DIR, REPORT_DIR, LOG_DIR, MISSING_DATA_DIR):
+for fdir in (DATA_DIR, REPORT_DIR, LOG_DIR, MISSING_DATA_DIR, DEBUG_DIR):
     if not os.path.exists(path=fdir):
         os.makedirs(name=fdir)

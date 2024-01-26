@@ -12,7 +12,7 @@ from utils.loader import load_price
 from utils.log import logger
 from utils.report import gen_report
 from utils.valid import check_cols
-from utils.var import ANNUAL_MS, CFG_DIR, INTERVAL_MS_MAP
+from utils.var import ANNUAL_MS, CFG_DIR, DEBUG_DIR, INTERVAL_MS_MAP
 
 
 def main(cfg: dict):
@@ -222,11 +222,11 @@ def main(cfg: dict):
         prc_df["ret_diff"] > cfg["fee"], prc_df["ret_diff"], 0
     )
     prc_df["ideal_binance_side"] = np.select(
-        [prc_df["ret_diff"] > 0, prc_df["ret_diff"] < 0],
-        [1, -1],
-        0,
+        condlist=[prc_df["ret_diff"] > 0, prc_df["ret_diff"] < 0],
+        choicelist=[1, -1],
+        default=0,
     )
-    prc_df.to_csv("debug.csv")
+    prc_df.to_csv(os.path.join(DEBUG_DIR, "debug.csv"), index=False)
 
     """
     9. calculate max drawdown and other risk metrics
