@@ -21,7 +21,9 @@ timeframe: 30m
 # https://docs.ccxt.com/#/
 ccxt_sym: BNB/USDT:USDT
 # custom file name and function name
+# under 'custom' folder
 file: v1.py
+# function in the file above
 func: func
 # Assuming binance 1bps and okx 1bps
 fee: 0.0002
