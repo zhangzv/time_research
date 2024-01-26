@@ -1,7 +1,6 @@
 import os
 
 INTERVAL_MS_MAP: dict[str, int] = {
-    "1s": 1000,
     "1m": 60000,
     "3m": 60000 * 3,
     "5m": 60000 * 5,
@@ -15,7 +14,7 @@ INTERVAL_MS_MAP: dict[str, int] = {
     "12h": 60000 * 60 * 12,
     "1d": 60000 * 60 * 24,
 }
-
+ANNUAL_MS: int = INTERVAL_MS_MAP["1d"] * 365
 
 # code repo
 REPO_DIR: str = os.path.join(os.path.dirname(p=__file__), "..")
