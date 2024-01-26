@@ -46,7 +46,10 @@ def load_price(
     2. set query limit and exchange object
     """
     data_count: int = math.ceil((etime - stime) / interval_ts) + 1
-    LIMIT: int = 100 if data_count > 100 else data_count
+    # different exchange has different rate limit, try to use the largest available one
+    LIMIT: int = 100 if exchange == "okx" else 1000
+    if data_count < LIMIT:
+        LIMIT = data_count
     call_times: int = math.ceil(data_count / LIMIT)
     cex: ccxt.Exchange = eval(f"ccxt.{exchange}()")
 
