@@ -6,10 +6,12 @@ import numpy as np
 from pandas import DataFrame, Timedelta, Timestamp, merge
 
 from utils.config import load_cfg
+from utils.dd import top_drawdown
 from utils.loader import load_price
 from utils.log import logger
+from utils.report import gen_report
 from utils.valid import check_cols
-from utils.var import CFG_DIR, INTERVAL_MS_MAP
+from utils.var import ANNUAL_MS, CFG_DIR, INTERVAL_MS_MAP
 
 
 def main(cfg: dict):
@@ -58,9 +60,10 @@ def main(cfg: dict):
 
     # Data process
     logger.info(msg="Calculating signal")
+    # calculate return
     okx_prc["ret"] = okx_prc["close"] / okx_prc["open"] - 1
     binance_prc["ret"] = binance_prc["close"] / binance_prc["open"] - 1
-
+    # merge data
     prc_df: DataFrame = merge(
         left=okx_prc[["sym", "ts", "open", "ret"]].rename(
             columns={"open": "okx_open_prc", "ret": "okx_ret"}
@@ -82,7 +85,7 @@ def main(cfg: dict):
             "binance_ret",
         ],
     )
-
+    # calculate signal
     prc_df["signal"] = abs((prc_df["binance_open_prc"] / prc_df["okx_open_prc"]) - 1)
     prc_df["trade"] = prc_df["signal"] > cfg["threshold"]
 
@@ -102,6 +105,67 @@ def main(cfg: dict):
             f"Signal was triggered less than 20% of total count: {100*signal_triggered_count/total_count}%, "
             "please check the threshold."
         )
+        if signal_triggered_count / total_count == 0:
+            logger.error(f"No signal was triggered, please check the threshold.")
+            return
+
+    # decide side
+    prc_df["binance_side"] = np.select(
+        condlist=[
+            prc_df["trade"] & (prc_df["binance_open_prc"] > prc_df["okx_open_prc"]),
+            prc_df["trade"] & (prc_df["binance_open_prc"] < prc_df["okx_open_prc"]),
+        ],
+        choicelist=[-1, 1],
+        default=0,
+    )
+    prc_df["okx_side"] = -1 * prc_df["binance_side"]
+
+    # calculate strategy return at each timepoint
+    prc_df["ret"] = (
+        prc_df["binance_side"]
+        * prc_df["binance_ret"]
+        * prc_df["okx_side"]
+        * prc_df["okx_ret"]
+    )
+
+    # caculate max drawdown
+    prc_df["nav"] = (prc_df["ret"] + 1).cumprod()
+    top_dd: DataFrame = top_drawdown(
+        x=np.array(prc_df["nav"]),
+        time=np.array(prc_df["ts"]),
+        topN=3,
+    )
+    check_cols(
+        df=top_dd,
+        cols=["peak_time", "trough_time", "recovery_time", "max_dd"],
+    )
+    top_dd["max_dd"] *= 100
+    top_dd["max_dd"] = top_dd["max_dd"].round(2).astype(str) + "%"
+
+    # calculate performance metrics
+    scalar: float = Timedelta(value=ANNUAL_MS, unit="millisecond") / timeframe_ts
+    annual_ret: float = float(np.mean(a=prc_df["ret"])) * scalar
+    annual_std: float = float(np.std(a=prc_df["ret"], ddof=1) * np.sqrt(scalar))
+    annual_sr: float = annual_ret / annual_std
+    win_ratio: float = len(prc_df[prc_df["ret"] > 0]) / len(prc_df[prc_df["ret"] != 0])
+    performance_data: dict = {
+        "Annual Return": str(round(annual_ret * 100, 2)) + "%",
+        "Annual Std": str(round(annual_std * 100, 2)) + "%",
+        "Annual Sharpe": round(annual_sr, 2),
+        "Win Ratio": str(round(win_ratio, 2)) + "%",
+        "Max Drawdown": top_dd["max_dd"][0],
+    }
+
+    # generate report
+    report_data: dict[str, DataFrame] = {
+        "config": DataFrame(data=cfg.items(), columns=["param", "value"]),
+        "performance": DataFrame(
+            data=performance_data.items(), columns=["metrics", "value"]
+        ),
+        "drawdown": top_dd[["peak_time", "trough_time", "recovery_time", "max_dd"]],
+        "ret": prc_df[["ts", "ret"]],
+    }
+    gen_report(report_data=report_data)
     return
 
 
