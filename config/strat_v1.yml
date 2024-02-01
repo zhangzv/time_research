@@ -22,7 +22,7 @@ timeframe: 30m
 ccxt_sym: BNB/USDT:USDT
 # custom file name and function name
 # under 'custom' folder
-file: v1.py
+file: v2.py
 # function in the file above
 func: func
 # Assuming binance 1bps and okx 1bps
