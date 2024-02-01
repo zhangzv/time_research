@@ -7,6 +7,11 @@ from utils.valid import check_cols
 
 
 def func(prc_df: DataFrame, cfg: dict):
+    # load params from config
+    lookback: int = cfg["lookback"]
+    halflife: int = cfg["halflife"]
+    z_lb: int = cfg["z_lb"]
+
     """
     1. load bybit price to help decide the mid price
     """
@@ -50,12 +55,27 @@ def func(prc_df: DataFrame, cfg: dict):
         "mid_prc"
     ]
 
+    # define the spread between binance and okx
+    prc_df["score"] = prc_df["binance_dis"].abs() + prc_df["okx_dis"].abs()
+    # calculate exponentially moving average of the score
+    prc_df["rolling_mean"] = prc_df["score"].transform(
+        lambda y: y.rolling(window=lookback, closed="left").apply(
+            func=lambda x: x.ewm(halflife=halflife).mean().iloc[-1]
+        )
+    )
+    # calculate rolling standard deviation of the score
+    prc_df["rolling_std"] = (
+        prc_df["score"].rolling(window=lookback, closed="left").std()
+    )
+    # calculate z score to dynamically define if the score is an extreme value that gives us signal
+    prc_df["signal"] = (prc_df["score"] - prc_df["rolling_mean"]) / prc_df[
+        "rolling_std"
+    ]
+
     # Make sure binance open price and okx open price are distributed at 2 sides of the mid
-    # This helps remove the noise, regardless of the market moves.
-    # Further filter on the distance helps further remove the noise.
+    # Make sure z score is higher than the lower bound to define 'abnormal'
     prc_df["trade"] = np.where(
-        ((prc_df["binance_dis"] < -0.0004) & (prc_df["okx_dis"] > 0.0005))
-        | ((prc_df["binance_dis"] > 0.0005) & (prc_df["okx_dis"] < -0.0005)),
+        (prc_df["binance_dis"] * prc_df["okx_dis"] < 0) & (prc_df["signal"] > z_lb),
         True,
         False,
     )
