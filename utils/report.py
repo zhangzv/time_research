@@ -18,13 +18,11 @@ def gen_report(report_data: dict[str, DataFrame]):
     performance_df: DataFrame = report_data["performance"]
     dd_df: DataFrame = report_data["drawdown"]
     ret_df: DataFrame = report_data["ret"]
-    signal_df: DataFrame = report_data["signal"]
     fee_df: DataFrame = report_data["fee"]
     check_cols(df=cfg_df, cols=["param", "value"])
     check_cols(df=performance_df, cols=["metrics", "value"])
     check_cols(df=dd_df, cols=["peak_time", "trough_time", "recovery_time", "max_dd"])
     check_cols(df=ret_df, cols=["ts", "ret", "adj_ret"])
-    check_cols(df=signal_df, cols=["ts", "signal"])
     check_cols(df=fee_df, cols=["ts", "1bps", "2bps", "3bps"])
 
     # make sure the dir exists
@@ -134,16 +132,19 @@ def gen_report(report_data: dict[str, DataFrame]):
     pdf.savefig(figure=fig)
     plt.close(fig=fig)
 
-    # signal distribution
-    fig: Figure = plot_dist(
-        data=np.array(object=signal_df["signal"]),
-        bins=100,
-        _x_label="signal",
-        _y_label="count",
-        _title=f"Signal Distribution",
-    )
-    pdf.savefig(figure=fig)
-    plt.close(fig=fig)
+    if "signal" in report_data.keys():
+        signal_df: DataFrame = report_data["signal"]
+        check_cols(df=signal_df, cols=["ts", "signal"])
+        # signal distribution
+        fig: Figure = plot_dist(
+            data=np.array(object=signal_df["signal"]),
+            bins=100,
+            _x_label="signal",
+            _y_label="count",
+            _title=f"Signal Distribution",
+        )
+        pdf.savefig(figure=fig)
+        plt.close(fig=fig)
 
     pdf.close()
     return

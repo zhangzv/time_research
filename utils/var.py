@@ -1,6 +1,7 @@
 import os
 
 INTERVAL_MS_MAP: dict[str, int] = {
+    "1s": 1000,
     "1m": 60000,
     "3m": 60000 * 3,
     "5m": 60000 * 5,

@@ -12,7 +12,7 @@ from utils.var import INTERVAL_MS_MAP
 def load_price(
     stime: Timestamp,
     etime: Timestamp,
-    exchange: Literal["okx", "binance"],
+    exchange: Literal["okx", "binance", "bybit"],
     symbols: list[str] = ["BTC/USDT:USDT"],
     timeframe: str = "15m",
 ) -> DataFrame:
