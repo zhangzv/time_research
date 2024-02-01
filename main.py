@@ -219,13 +219,14 @@ def main(cfg: dict):
     # debug columns
     prc_df["ret_diff"] = prc_df["binance_ret"] - prc_df["okx_ret"]
     prc_df["ret_diff"] = np.where(
-        prc_df["ret_diff"] > cfg["fee"], prc_df["ret_diff"], 0
+        prc_df["ret_diff"].abs() > cfg["fee"], prc_df["ret_diff"], 0
     )
     prc_df["ideal_binance_side"] = np.select(
         condlist=[prc_df["ret_diff"] > 0, prc_df["ret_diff"] < 0],
         choicelist=[1, -1],
         default=0,
     )
+    prc_df["ideal_ret"] = prc_df["ret_diff"].abs()
     prc_df.to_csv(os.path.join(DEBUG_DIR, "debug.csv"), index=False)
 
     """
@@ -268,9 +269,10 @@ def main(cfg: dict):
         ),
         "drawdown": top_dd[["peak_time", "trough_time", "recovery_time", "max_dd"]],
         "ret": prc_df[["ts", "ret", "adj_ret"]],
-        "signal": prc_df[["ts", "signal"]],
         "fee": prc_df[["ts", "1bps", "2bps", "3bps"]],
     }
+    if "signal" in prc_df.columns:
+        report_data["signal"] = prc_df[["ts", "signal"]]
     gen_report(report_data=report_data)
     return
 
@@ -280,7 +282,7 @@ if __name__ == "__main__":
     1. load config
     """
     # update the cfg_fn only
-    cfg_fn = "strat.yml"
+    cfg_fn = "strat_v3.yml"
     cfg_fp: str = os.path.join(CFG_DIR, cfg_fn)
     cfg: dict[str, Any] = load_cfg(cfg_fp=cfg_fp)
 
